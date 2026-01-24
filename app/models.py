@@ -10,6 +10,10 @@ def validate_image_size(image):
     if image.size > max_size:
         raise ValidationError("Image file too large (max 500KB allowed).")
 
+def validate_not_future(value):
+    if value > timezone.now().date():
+        raise ValidationError("Date cannot be in the future.")
+
 
 class Cropitem(models.Model):
     name = models.CharField( max_length=30)
@@ -21,20 +25,6 @@ class Cropitem(models.Model):
 
     def __str__(self):
         return str(self.name)
-
-
-# class Croprate(models.Model):
-#     tomato_rate = models.PositiveIntegerField(default=0)
-#     bellpepper_rate = models.PositiveIntegerField(default=0)
-#     cucumber_rate = models.PositiveIntegerField(default=0)
-#     abernero_rate = models.PositiveIntegerField(default=0)
-
-#     class Meta:
-#         verbose_name = "Croprate"
-#         verbose_name_plural = "Croprate"  # Prevents Django from adding "s"
-
-#     def __str__(self):
-#         return str(self.tomato_rate)
 
 
 class Invoice(models.Model):
@@ -52,7 +42,7 @@ class Invoice(models.Model):
     total_price = models.PositiveIntegerField(default=0)
 
     invoice_number = models.CharField(max_length=20, unique=True, editable=False)
-    created_at = models.DateField(null=True, blank=True)
+    created_at = models.DateField(null=True, blank=True, validators=[validate_not_future])
     image = models.ImageField( validators=[validate_image_size],  upload_to = 'signatures', blank=True)
 
     class Meta:
