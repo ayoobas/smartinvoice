@@ -123,7 +123,7 @@
         
       <div class="row mt-2 mb-5">
       {% comment %} class="datepicker" {% endcomment %}
-        <p class="fw-bold">Date: <span><input type="date"  data-date-format="mm/dd/yyyy" name= "createdate" required></span></p>
+        <p class="fw-bold">Date: <span><input type="date"  data-date-format="mm/dd/yyyy" max="{% now 'Y-m-d' %}" name= "createdate" required></span></p>
         {% comment %} <p class="fw-bold mt-3">Signature:</p> {% endcomment %}
       </div>
 
