@@ -7,6 +7,11 @@ from django.core.files.base import ContentFile
 import base64
 import uuid
 from django.db import IntegrityError
+from io import BytesIO
+from xhtml2pdf import pisa
+import threading
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
 
 #To load the rates and display them
 def home(request):
@@ -88,7 +93,7 @@ def generate_invoice(request):
             image=signature_file,   # The uploaded photo
         
             created_at=createdate if createdate else timezone.now().date()
-        )
+             )
              # If successful, go to the success page
                # 7. Redirect or Render Success Page
              messages.success(request, "✅ Records saved successfully!")
@@ -103,29 +108,75 @@ def generate_invoice(request):
     items = Cropitem.objects.all()
     return render(request, 'index.html', {'items': items})
 
+#To send invoice as email
+def send_invoice_background(invoice, subtotal, line_totals):
+    # 1. Prepare HTML for the PDF
+    html_context = {
+        'invoice': invoice,
+        'subtotal': subtotal,
+        'line_totals': line_totals,
+    }
+    html_string = render_to_string('success.html', html_context)
+    
+    # 2. Create the PDF in memory (no need to save a file on disk)
+    pdf_buffer = BytesIO()
+    pisa.CreatePDF(BytesIO(html_string.encode("UTF-8")), dest=pdf_buffer)
+    pdf_data = pdf_buffer.getvalue()
+
+    # 3. Setup the Email
+    subject = f"Invoice {invoice.invoice_number} from Obaz Grocery"
+    email = EmailMessage(
+        subject,
+        "Thank you for shopping with us. \n"
+        "Please find your attached invoice summary.",
+        'Obaz Grocery <your-email@gmail.com>',
+        [invoice.email],
+    )
+    
+    # Attach the PDF
+    email.attach(f"Invoice_{invoice.invoice_number}.pdf", pdf_data, 'application/pdf')
+
+    # 4. Start the background thread
+    email_thread = threading.Thread(target=email.send)
+    email_thread.start()
+
 #To view the invoice generated
 
 def view_invoice(request, pk):
-    # This fetches only ONE invoice by its ID, or shows a 404 error if not found
+    # 1. Fetch the invoice
+    invoice = get_object_or_404(Invoice, pk=pk)
+    
+    # 2. Fetch rates efficiently
     items_in_db = Cropitem.objects.all()
     rates = {item.name: item.rate for item in items_in_db}
-    rate_t = rates.get('Tomatoes', 0)
-    rate_b =  rates.get('Bell_Pepper', 0)
-    rate_c = rates.get('Cucumber', 0)
-    rate_a = rates.get('Abanero', 0)
-
-    invoice = get_object_or_404(Invoice, pk=pk)
-
-    print('invoice',invoice)
     
+    # 3. Calculate Line Totals (Required for both Template and Email)
+    line_totals = {
+        't': invoice.tomatoes * rates.get('Tomatoes', 0),
+        'b': invoice.bell_pepper * rates.get('Bell_Pepper', 0),
+        'c': invoice.cucumber * rates.get('Cucumber', 0),
+        'a': invoice.abernero * rates.get('Abanero', 0),
+    }
+    
+    # 4. Calculate Subtotal
+    subtotal = sum(line_totals.values())
+
+    # 5. TRIGGER BACKGROUND EMAIL
+    # Note: We check 'invoice.name.email' because email is stored in CustomerInfo
+    if invoice.email:
+        send_invoice_background(invoice, subtotal, line_totals)
+
+    # 6. Prepare context for the Success Page
     context = {
         'invoice': invoice,
-        'rate_t':rate_t,
-        'rate_b':rate_b,
-        'rate_c':rate_c,
-        'rate_a':rate_a
+        'line_totals': line_totals,
+        'subtotal': subtotal,
+        'rate_t': rates.get('Tomatoes', 0),
+        'rate_b': rates.get('Bell_Pepper', 0),
+        'rate_c': rates.get('Cucumber', 0),
+        'rate_a': rates.get('Abanero', 0),
     }
+    
     return render(request, 'success.html', context)
-
 
 

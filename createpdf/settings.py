@@ -120,4 +120,22 @@ STATIC_URL = 'static/'
 MEDIA_ROOT = (BASE_DIR / 'media')
 MEDIA_URL = '/media/'
 
+#For sending email
+# settings.py
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# Your real Gmail address
+EMAIL_HOST_USER = 'tureal162@gmail.com' 
+#xg
+# The 16-character App Password from Google
+
+EMAIL_HOST_PASSWORD = 'mqcudekpzgvdmc' 
+
+# This is what people see in their "From" field
+DEFAULT_FROM_EMAIL = 'Obaz Grocery <tureal162@gmail.com>'
+
 
