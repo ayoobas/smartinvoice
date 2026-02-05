@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Grocery Store{% endblock title %}
+
+
+{% block main-content %}
+<div class="container mt-5 mb-5">
+    <div class="invoice-wrapper bg-white p-5 shadow-sm border">
+        
+        <div class="row mb-5">
+            <div class="col-6">
+                <h1 class="fw-bold text-success mb-0">OBAZ GROCERY</h1>
+                <p class="text-muted">Freshness You Can Trust<br>
+                123 Farm Road, Lagos, Nigeria<br>
+                +2348068173311</p>
+            </div>
+            <div class="col-6 text-end">
+                <h2 class="text-uppercase tracking-widest text-muted">Invoice</h2>
+                <div class="mt-3">
+                    <p class="mb-0"><strong>Invoice #:</strong> {{ invoice.invoice_number }}</p>
+                    <p class="mb-0"><strong>Date:</strong> {{ invoice.created_at|date:"d M, Y" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <hr class="border-secondary opacity-25">
+
+        <div class="row my-5">
+            <div class="col-12">
+                <h6 class="text-uppercase fw-bold text-muted small mb-3">Bill To:</h6>
+                <h4 class="mb-1">{{ invoice.name }}</h4>
+                <p class="text-muted mb-0">{{ invoice.address }}</p>
+                <p class="text-muted mb-0">{{ invoice.phone_no }} | {{ invoice.email }}</p>
+            </div>
+        </div>
+
+        <table class="table table-hover mt-4">
+            <thead class="bg-light">
+                <tr>
+                    <th class="py-3 px-4 border-0">Description</th>
+                    <th class="py-3 text-center border-0">Quantity</th>
+                    <th class="py-3 text-end border-0">Price</th>
+                </tr>
+            </thead>
+            <tbody class="border-top-0">
+                {% if invoice.tomatoes > 0 %}
+                <tr>
+                    <td class="py-3 px-4">Tomatoes</td>
+                    <td class="py-3 text-center">{{ invoice.tomatoes }}</td>
+                    <td class="py-3 text-end">{{rate_t}}</td>
+                </tr>
+                {% endif %}
+                
+                {% if invoice.bell_pepper > 0 %}
+                <tr>
+                    <td class="py-3 px-4">Bell Peppers</td>
+                    <td class="py-3 text-center">{{ invoice.bell_pepper }}</td>
+                    <td class="text-end">{{rate_b}}</td>
+                </tr>
+                {% endif %}
+                 {% if invoice.cucumber > 0 %}
+                <tr>
+                    <td class="py-3 px-4">Cucumber</td>
+                    <td class="py-3 text-center">{{ invoice.cucumber }}</td>
+                    <td class="text-end">{{rate_c}}</td>
+                </tr>
+                {% endif %}
+                 {% if invoice.abernero > 0 %}
+                <tr>
+                    <td class="py-3 px-4">Abernero</td>
+                    <td class="py-3 text-center">{{ invoice.abernero }}</td>
+                    <td class="text-end">{{rate_a}}</td>
+                </tr>
+                {% endif %}
+
+                </tbody>
+        </table>
+
+        <div class="row justify-content-end mt-4">
+            <div class="col-md-4">
+                <div class="d-flex justify-content-between p-2">
+                    <span class="text-muted">Subtotal</span>
+                    <span>₦{{ invoice.total_price|add:invoice.discount|floatformat:2 }}</span>
+                </div>
+                {% if invoice.discount > 0 %}
+                <div class="d-flex justify-content-between p-2 text-danger">
+                    <span>Discount</span>
+                    <span>- ₦{{ invoice.discount|floatformat:2}}</span>
+                </div>
+                {% endif %}
+                <div class="d-flex justify-content-between p-2 bg-success text-white fw-bold mt-2 rounded">
+                    <span>Total Amount</span>
+                    <span>₦ {{ invoice.total_price|floatformat:2}}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-5 pt-5">
+            <div class="col-6">
+                <p class="small text-muted mb-0"><strong>Notes:</strong></p>
+                <p class="small text-muted">Thank you for shopping at Obaz Grocery Store. Goods sold in good condition are not returnable.</p>
+            </div>
+            <div class="col-4 offset-2 text-center">
+                {% if invoice.image %}
+                    <img src="{{ invoice.image.url }}" alt="Signature" class="img-fluid" style="max-height: 80px; width: auto; border-bottom: 2px solid #333;">
+                {% else %}
+                    <div style="height: 80px; border-bottom: 2px solid #333;"></div>
+                {% endif %}
+                <p class="mt-2 fw-bold small text-uppercase">Authorized Signatory</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-4 d-print-none">
+        <button onclick="window.print()" class="btn btn-dark px-5 py-2">
+            <i class="fas fa-print me-2"></i> Print Official Invoice
+        </button>
+        <a href="{% url 'generate_invoice' %}" class="btn btn-link text-muted">Create Another</a>
+    </div>
+</div>
+
+<style>
+    /* Professional Typography & Print Styling */
+    .invoice-wrapper {
+        font-family: 'Inter', 'Segoe UI', sans-serif;
+        color: #333;
+        max-width: 900px;
+        margin: auto;
+    }
+    .tracking-widest { letter-spacing: 0.2em; }
+    
+    @media print {
+        body { background: none !important; margin: 0; padding: 0; }
+        .invoice-wrapper { border: none !important; box-shadow: none !important; width: 100% !important; max-width: 100% !important; }
+        .bg-success { background-color: #198754 !important; -webkit-print-color-adjust: exact; color: white !important; }
+        .d-print-none { display: none !important; }
+    }
+</style>
+{% endblock main-content%}

@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load socialaccount %}
+{% block title %}Grocery Store{% endblock title %}
+
+{% block main-content %}
+<div class = "container">
+<div class = "row my-3">
+<div class="col-sm-7 col-md-7 offset-sm-3 border border-2 border-success p-2 rounded">
+
+<div class="d-flex justify-content-center align-items-center" style="height: 100px;">
+    <h3 class="text-success">Obaz Grocery Store</h3>
+</div>
+<hr>
+{% comment %} {% url 'login' %} {% endcomment %}
+<div class = "container">
+<div class="card">
+  <div class="card-header bg-black"></div>
+  <div class="card-body">
+
+    <div class="container">
+      <div class="row">
+        <div class="col-xl-12">
+          <img src = "{% static 'images/company_logo.png' %}" width = "100" height = "60"/>
+        </div>
+      </div>
+
+
+      <div class="row">
+        <div class="col-xl-12">
+
+          <ul class="list-unstyled float-end">
+            <li style="font-size: 30px; color: green;">OBAZ Farms</li>
+            <li>123, Olaosebikan Street</li>
+            <li>Mariland Lagos</li>
+            <li>+2348068173322</li>
+            <li>Obazfarm@mail.com</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="row text-center">
+        <h3 class="text-uppercase text-center mt-3" style="font-size: 40px; color:green;">Invoice</h3>
+        <p>123456789</p>
+      </div>
+      <form action = "{% url 'generate_invoice' %}" method = "POST" enctype="multipart/form-data">
+      {% csrf_token %}
+        {% if messages %}
+            {% for msg in messages %}
+              <div class="alert alert-{{ msg.tags }}" role="alert">
+                {{ msg }}
+              </div>
+            {% endfor %}
+          {% endif %}
+      <div class="row">
+      <div class="col-md-6">
+      <a href = "{% provider_login_url 'google' %}" class = "field google"><i class= "fa-brands fa-google googleicon"></i>
+    <span>Signin with Google</span></a>
+      </div>
+      <div class="col-md-6"></div>
+      <div class="col-md-6">
+      <label> Name</label>
+      <input type="text" class="form-control" name= "fname" aria-label="" required>
+       <label>Address</label>
+      <input type="text" class="form-control" name ="address" aria-label="" required>
+      </div>
+       <div class="col-md-6">
+       <label> Phone no</label>
+      <input type="number" class="form-control" name = "phoneno" aria-label="" required>
+       <label> Email</label>
+      <input type="email" name ="email" class="form-control"  aria-label="">
+      </div>
+      <hr class="mt-3"  style="color: green">
+      </div>
+
+      <div class="row mx-3 mb-4">
+      <div class="card shadow-sm border-0">
+      <div class="card-body p-0">
+        <table class="table table-hover table-borderless align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">Description</th>
+              <th scope="col">Amount <span>&#8358;</span></th>
+               <th scope="col">Quantity</th>
+            </tr>
+          </thead>
+          
+          <tbody>
+          {% for item in items %}
+            <tr>
+              <td>{{item.name}}</td>
+              <td class="rate" data-price="{{item.rate}}"> {{item.rate}}</td>
+              <td><input type="number" name ="{{item.name}}" class="form-control qty-input"style="width: 100px;" aria-label=""></td>
+            </tr>
+             {% endfor %}
+             <tr>
+             <td>Discount</td>
+             <td></td>
+             
+             <td><input type="number" id="discount-field" name="discount" class="form-control qty-discount" style="width: 100px;" placeholder="0"></td>
+             </tr>
+          </tbody>
+        
+        </table>
+   </div>
+      </div>
+         </div>
+    
+<div class="row">
+  <div class="col-xl-8">
+    <ul class="list-unstyled float-end me-0">
+      <li>
+        <span class="me-3 float-start">Total Amount:</span>
+        <span>₦</span> <span id="sub-total">0.00</span> </li>
+      <li> 
+        <span class="me-5">Discount:</span>
+        <span>₦</span> <span id="discount-amount">0.00</span> </li>
+    </ul>
+  </div>
+</div>
+<hr>
+<div class="row">
+  <div class="col-xl-8" style="margin-left:60px">
+    <p class="float-end" style="font-size: 30px; color: red; font-weight: 400; font-family: Arial, sans-serif;">
+      Total: <span>₦</span> <span id="grand-total">0.00</span>
+    </p>
+  </div>
+</div>
+        
+      <div class="row mt-2 mb-5">
+      {% comment %} class="datepicker" {% endcomment %}
+        <p class="fw-bold">Date: <span><input type="date"  data-date-format="mm/dd/yyyy" max="{% now 'Y-m-d' %}" name= "createdate" required></span></p>
+        {% comment %} <p class="fw-bold mt-3">Signature:</p> {% endcomment %}
+      </div>
+
+      {% comment %} for signature {% endcomment %}
+      <div class="row mt-4 mb-4">
+    <div class="col-md-6">
+        <label class="fw-bold text-success mb-2">
+            <i class="fas fa-pen-nib"></i> Authorized Signature (optional)
+        </label>
+        
+        <div class="signature-container border border-2 border-success-subtle rounded bg-light shadow-sm" 
+             style="position: relative; width: 100%; height: 200px;">
+            <canvas id="signature-pad" class="w-100 h-100" style="touch-action: none; cursor: crosshair;"></canvas>
+        </div>
+
+        <input type="hidden" name="signature_data" id="signature_data">
+
+        <div class="d-flex justify-content-between mt-2">
+            <small class="text-muted">Sign above with your finger or mouse</small>
+            <button type="button" class="btn btn-sm btn-outline-danger" id="clear-signature">
+                <i class="fas fa-eraser"></i> Clear
+            </button>
+        </div>
+    </div>
+</div>
+      <button type="submit" class = "btn btn-primary btn-lg">Save</button>
+      <button type="submit" class = "btn btn-primary btn-lg">Generate Pdf</button>
+        </form>
+    </div>
+
+
+
+  </div>
+  <div class="card-footer bg-black"></div>
+</div>
+</div>
+</div>
+
+</div>
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Initialize Datepicker (Keeping your jQuery part for the calendar)
+    if (typeof $ !== 'undefined') {
+        $('.datepicker').datepicker({
+            format: 'mm/dd/yyyy',
+            autoclose: true,
+            todayHighlight: true
+        });
+    }
+
+    //Discount deduction 
+function calculateTotal() {
+    let subTotal = 0;
+
+    // 1. Calculate the sum of all item rows
+    const qtyInputs = document.querySelectorAll('.qty-input');
+    qtyInputs.forEach(input => {
+        const row = input.closest('tr');
+        const rateEl = row.querySelector('.rate');
+        
+        if (rateEl) {
+            const rate = parseFloat(rateEl.getAttribute('data-price')) || 0;
+            const qty = parseFloat(input.value) || 0;
+            subTotal += (rate * qty);
+        }
+    });
+
+    // 2. Get the discount value correctly
+    const discountInput = document.querySelector('.qty-discount');
+    const discountAmount = discountInput ? (parseFloat(discountInput.value) || 0) : 0;
+
+    // 3. Final calculation
+    const grandTotal = subTotal - discountAmount;
+
+    // 4. Update the display areas
+    const localeOptions = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+    
+    const subTotalSpan = document.getElementById('sub-total');
+    const discountSpan = document.getElementById('discount-amount');
+    const grandTotalSpan = document.getElementById('grand-total');
+
+    if (subTotalSpan) subTotalSpan.innerText = subTotal.toLocaleString('en-NG', localeOptions);
+    if (discountSpan) discountSpan.innerText = discountAmount.toLocaleString('en-NG', localeOptions);
+    
+    // Fix: Use grandTotal here instead of subTotal
+    if (grandTotalSpan) grandTotalSpan.innerText = grandTotal.toLocaleString('en-NG', localeOptions);
+
+    console.log("Subtotal:", subTotal, "Discount:", discountAmount, "Grand Total:", grandTotal);
+}
+
+// 5. Attach triggers to BOTH Quantity and Discount boxes
+document.querySelectorAll('.qty-input, .qty-discount').forEach(input => {
+    input.addEventListener('input', calculateTotal);
+});
+
+// Run once at the start
+calculateTotal();
+
+//Signature javascript code
+const canvas = document.getElementById('signature-pad');
+    
+    // Initialize Signature Pad
+    const signaturePad = new SignaturePad(canvas, {
+        backgroundColor: 'rgba(255, 255, 255, 0)', // Transparent
+        penColor: 'rgb(0, 0, 128)' // Professional dark blue ink
+    });
+
+    // Resize canvas for high-resolution screens
+    function resizeCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+        signaturePad.clear(); // Resizing clears the canvas
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    // Clear Signature
+    document.getElementById('clear-signature').addEventListener('click', function () {
+        signaturePad.clear();
+    });
+
+    // Before form submission, save signature data
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function (e) {
+        if (!signaturePad.isEmpty()) {
+            const dataURL = signaturePad.toDataURL();
+            document.getElementById('signature_data').value = dataURL;
+        }
+    });
+
+
+});
+
+</script>
+
+{% endblock main-content%}
